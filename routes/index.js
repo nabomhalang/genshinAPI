@@ -1,0 +1,84 @@
+const express = require("express");
+const path = require("path");
+const fs = require("fs");
+
+const MysqlConnector = require("./controllers/mysql");
+const RedisConnector = require("./controllers/redis");
+
+const { validator, cache } = require("./guard");
+const { DB_NAME, DB_PASSWORD, DB_TABLE_NAME, FRIST_MAKE_TABLE_USER, REDIS_PORT, REDIS_HOST } = require("./interfaces/config");
+
+/**
+ * 
+ * @param {express.Express} app 
+ */
+async function prepare(app) {
+    /** @type {import("./controllers/mysql")} */
+    const mysql = new MysqlConnector();
+    
+    /** @type {import("./controllers/redis")} */
+    const redis = new RedisConnector();
+
+    await new Promise((resolve, reject) => {
+        mysql.init(DB_NAME, DB_PASSWORD, DB_TABLE_NAME, async() => {
+            await mysql.query("SHOW TABLES LIKE \"UESR\"").then(async(r) => {
+                if (!r || (r && !r.length)) {
+                    await mysql.query(FRIST_MAKE_TABLE_USER).catch(e => reject(e));
+                }
+            }).catch(e => reject(e));
+        });
+        redis.init(REDIS_PORT, REDIS_HOST, ()=> console.log('Connection Success Redis'));
+        resolve(0);
+    });
+    
+    app.disable("x-powered-by");
+    app.use(express.json());
+
+    app.use((req, res, next) => {
+        req.mysql = mysql;
+        req.redis = redis;
+
+        res.setHeader("Access-Control-Allow-Origin", "*.nabomhalangkr.site");
+        res.setHeader("Access-Control-Allow-Headers", "Content-Type,Accept");
+        res.setHeader("Access-Control-Allow-Methods", "*");
+
+        if (req.method == "OPTIONS") return res.send(null);
+
+        next();
+    });
+
+    fs.readdirSync(path.join(__dirname, "handler/")).forEach((handlerFile) => {
+        const handler = require(`./handler/${handlerFile}`);
+        
+        if (handler?.schema)
+            app.post(handler.path, (req, res, next) => validator(req, res, next, handler.schema), (req, res, next) => cache(req, res, next), handler.post);
+        else if (handler?.post)
+            app.post(handler.path, handler.post);
+        else if (handler?.get)
+            app.get(handler.path, handler.get);
+    })
+    
+
+    app.use((req, res, next) => {
+        return res.status(404).json({
+            c: 404,
+            d: "Not Found"
+        });
+    });
+
+    app.use((err, req, res, next) => {
+        console.log(`err: ${err}`);
+        if (!res.headerSent) {
+            return res.status(500).json({
+                c: 500,
+                d: "Internal Server Error"
+            });
+        }
+    });
+
+    return mysql;
+}
+
+module.exports = {
+    prepare
+}
