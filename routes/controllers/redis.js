@@ -3,10 +3,11 @@ const { REDIS_PASSWORD } = require("../interfaces/config");
 
 class RedisClient {
     constructor() {
-        this.config = null;
+        /** @type {redis.RedisClientType} */
         this.client = null;
+        this.config = null;
     }
-    
+
     /**
      * 
      * @param {Number} port
@@ -16,18 +17,21 @@ class RedisClient {
     async init(port, host, callback) {
         this.config = {
             socket: {
-                port: port, 
+                port: port,
                 host: host
             },
-            password: REDIS_PASSWORD
+            password: REDIS_PASSWORD,
+            legacyMode: true
         }
 
         this.client = redis.createClient(this.config);
-        
+
         this.client.on("error", (error) => console.error(`Error : ${error}`));
-        await this.client.connect();
-        
-        if(callback) callback(this);
+        await this.client.connect().then();
+
+        this.client = this.client.v4;
+
+        if (callback) callback(this);
     }
 
     /**
@@ -35,7 +39,7 @@ class RedisClient {
      * @param {String} key 
      * @param {String} value 
      */
-    setValue(key, value) {
+    set(key, value) {
         this.client.set(key, value);
         this.client.expire(key, 600);
     }
@@ -44,10 +48,9 @@ class RedisClient {
      * 
      * @param {String} key 
      */
-    getValue(key) {
-        return this.client.get(key)
+    get(key) {
+        return this.client.get(key);
     }
-
 }
 
 module.exports = RedisClient;

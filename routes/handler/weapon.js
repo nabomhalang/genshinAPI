@@ -1,25 +1,24 @@
 const yup = require("yup");
 const crypto = require("crypto");
 
-const { EnkaClient } = require("enka-network-api")
-
 const schema = yup.object({
     uid: yup.number().required(),
     language: yup.string().max(64).default('en')
 });
 
 /** @type {import("express").RequestHandler} */
-async function post(req, res, next) {
+async function post(req, res) {
     /** @type {import("../controllers/redis")} */
     const redis = req.redis;
 
-    const enka = new EnkaClient();
-    
+    /** @type {import("../controllers/enka")} */
+    const enka = req.enka;
+
     const { uid, language } = req.body;
-    
-    enka.fetchUser(uid).then(user => {
+
+    enka.client.fetchUser(uid).then(user => {
         const characters = user.characters;
-        
+
         if (characters.length === 0) {
             return res.status(400).json({
                 c: 400,
@@ -28,6 +27,7 @@ async function post(req, res, next) {
             });
         }
         const result = new Object();
+
         for (const char of characters) {
             const weapon_ob = new Object();
             const weapon = char.weapon.weaponData;
@@ -53,17 +53,17 @@ async function post(req, res, next) {
 
             weapon_main.flat.weaponStats.map((_weapon, index) => {
                 if (!index)
-                    weapon_ob[`weapon_MainValue`] = {"appendPropId": _weapon.appendPropId, "statValue": _weapon.statValue};
+                    weapon_ob[`weapon_MainValue`] = { "appendPropId": _weapon.appendPropId, "statValue": _weapon.statValue };
                 else
-                    weapon_ob[`weapon_subValue`] = {"appendPropId": _weapon.appendPropId, "statValue": _weapon.statValue};
+                    weapon_ob[`weapon_subValue`] = { "appendPropId": _weapon.appendPropId, "statValue": _weapon.statValue };
             });
             result[char.characterData.name.get(language)] = weapon_ob
         }
 
-        
+
         const hUID = crypto.createHash('sha256').update(`${req.route.path}/${uid}`).digest('hex');
-        redis.setValue(hUID, JSON.stringify(result));
-        
+        redis.set(hUID, JSON.stringify(result));
+
         return res.status(200).json({
             c: 200,
             d: result

@@ -19,16 +19,16 @@ function cache(req, res, next) {
     const redis = req.redis;
 
     const hUID = crypto.createHash('sha256').update(`${req.route.path}/${req.body.uid}`).digest('hex');
-    
-    (async() => {
-        await redis.getValue(hUID).then(async(data) => {
-            if(data) {
+
+    (async () => {
+        await redis.get(hUID).then(async (r) => {
+            if (r) {
                 return res.status(200).json({
                     c: 200,
-                    d: JSON.parse(data)
+                    d: JSON.parse(r)
                 });
             } else next();
-        });
+        })
     })();
 }
 
