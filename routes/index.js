@@ -7,7 +7,7 @@ const RedisConnector = require("./controllers/redis");
 const EnkaConnectors = require("./controllers/enka");
 
 const { validator, cache } = require("./guard");
-const { DB_NAME, DB_PASSWORD, DB_TABLE_NAME, FRIST_MAKE_TABLE_USER, REDIS_PORT, REDIS_HOST } = require("./interfaces/config");
+const { DB_NAME, DB_PASSWORD, DB_TABLE_NAME, REDIS_PORT, REDIS_HOST } = require("./interfaces/config");
 
 /**
  * 
@@ -23,12 +23,11 @@ async function prepare(app) {
     /** @type {import("./controllers/enka")} */
     const enka = new EnkaConnectors();
 
-    
     await new Promise((resolve, reject) => {
         mysql.init(DB_NAME, DB_PASSWORD, DB_TABLE_NAME, async () => {
             await mysql.query("SHOW TABLES LIKE \"UESR\"").then(async (r) => {
                 if (!r || (r && !r.length)) {
-                    await mysql.query(FRIST_MAKE_TABLE_USER).catch(e => reject(e));
+                    await mysql.query("CREATE TABLE USER (UUID VARCHAR(64) PRIMARY KEY, userEmail VARCHAR(256), userID VARCHAR(64) UNIQUE, userPW VARCHAR(64), userName VARCHAR(32), userAvatar VARCHAR(512), userBD VARCHAR(32), userSEX INT, userVerified INT DEFAULT 0)").catch(e => reject(e));
                 }
             }).catch(e => reject(e));
         });
@@ -58,7 +57,8 @@ async function prepare(app) {
         const handler = require(`./handler/${handlerFile}`);
 
         if (handler?.schema)
-            app.post(handler.path, (req, res, next) => validator(req, res, next, handler.schema), (req, res, next) => cache(req, res, next), handler.post);
+            app.post(handler.path, (req, res, next) => validator(req, res, next, handler.schema),
+                (req, res, next) => cache(req, res, next), handler.post);
         else if (handler?.post)
             app.post(handler.path, handler.post);
         else if (handler?.get)

@@ -8,6 +8,8 @@
     "mysql2": "^2.3.3",
     "redis": "^4.5.1",
     "redis-connection-pool": "^4.0.1",
+    "solapi": "^5.2.0",
+    "twilio": "^3.84.0",
     "validate": "^5.2.0",
     "yup": "^0.32.11"
   },

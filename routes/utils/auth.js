@@ -16,7 +16,7 @@ function create(data) {
         }, secret, {
             expiresIn: "30m"
         }, (err, token) => {
-            if(err) reject(err);
+            if (err) reject(err);
             else resolve(token);
         });
     });
@@ -32,7 +32,7 @@ function verify(key) {
         console.log(verified);
 
         return true;
-    } catch(_) { }
+    } catch (_) { }
 
     return false;
 }
@@ -44,25 +44,25 @@ function verify(key) {
 function decode(data) {
     try {
         return decrypt(jwt.verify(data, secret).data);
-    } catch(_) { }
+    } catch (_) { }
 
     return null;
 }
 
 /**
  * 
- * @param {string | Buffer} data 
- * @returns {string}
+ * @param {String | Buffer} data 
+ * @returns {String}
  */
 function encrypt(data) {
-    const cipher = crypto.createCipheriv("aes-256-gcm", secret.substring(0,32), Buffer.alloc(8, 0));
+    const cipher = crypto.createCipheriv("aes-256-gcm", secret.substring(0, 32), Buffer.alloc(8, 0));
     return cipher.update(data, null, "base64") + cipher.final("base64") + cipher.getAuthTag().toString("hex");
 }
 
 /**
  * 
- * @param {string} data 
- * @returns {string}
+ * @param {String} data 
+ * @returns {String}
  */
 function decrypt(data) {
     const cipher = crypto.createDecipheriv("aes-256-gcm", secret.substring(0, 32), Buffer.alloc(8, 0));
@@ -70,10 +70,21 @@ function decrypt(data) {
     return cipher.update(data.substring(0, data.length - 32), "base64", "utf-8") + cipher.final("utf-8");
 }
 
+/**
+ * 
+ * @param {Number} size
+ */
+function createRandom(size) {
+    return [...Array(size)]
+        .map(() => Math.floor(Math.random() * 16).toString(16))
+        .join("");
+}
+
 module.exports = {
     create,
     decode,
     encrypt,
     decrypt,
-    verify
+    verify,
+    createRandom
 }

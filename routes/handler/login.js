@@ -1,6 +1,6 @@
 const yup = require("yup");
 const crypto = require("crypto");
-const { create } = require("../utils/auth");
+const { create } = require("../utils");
 
 const schema = yup.object({
     user: yup.string().required(),
@@ -9,7 +9,7 @@ const schema = yup.object({
 
 /** @type {import("express").RequestHandler} */
 function post(req, res, next) {
-    /** @type {import("../controllers/redis")} */
+    /** @type {import("../controllers/mysql")} */
     const mysql = req.mysql;
 
     const unauthorized = () => {
@@ -20,21 +20,21 @@ function post(req, res, next) {
         });
     }
 
-    (async() => {
+    (async () => {
         const { user, pass } = req.body;
 
-        let userPassword = await mysql.query("SELECT * FROM USER WHERE userEmail=? OR userID=?", [user, user])
+        let userInfo = await mysql.query("SELECT * FROM USER WHERE userEmail=? OR userID=?", [user, user])
 
-        if (!userPassword.length) return unauthorized();
+        if (!userInfo.length) return unauthorized();
 
-        userPassword = userPassword[0];
+        userInfo = userInfo[0];
 
         const hashPassword = crypto.createHash("sha256").update(pass + "/genshin").digest('hex');
-        if (userPassword.userPW != hashPassword) return unauthorized();
+        if (userInfo.userPW != hashPassword) return unauthorized();
 
         return res.json({
             c: 200,
-            d: create(JSON.stringify(userPassword))
+            d: await create(JSON.stringify(userInfo))
         });
     })().catch(next);
 }

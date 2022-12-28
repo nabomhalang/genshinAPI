@@ -6,15 +6,15 @@ const schema = yup.object({
     user: yup.string().max(64).required(),
     pass: yup.string().min(8).required(),
     disp: yup.string().max(32).required(),
-    sex: yup.number().required(),
+    sex: yup.number().required()
 });
 
 /** @type {import("express").RequestHandler} */
 function post(req, res) {
-    /** @type {import("../controllers/redis")} */
+    /** @type {import("../controllers/mysql")} */
     const mysql = req.mysql;
 
-    (async() => {
+    (async () => {
         try {
             const { email, user, pass, disp, sex } = req.body;
 
@@ -30,7 +30,7 @@ function post(req, res) {
             const hashUUID = crypto.createHash("sha256")
                 .update(`${email}/${user}/${new Date().toISOString()}`)
                 .digest('hex');
-            
+
             const hashPassword = crypto.createHash("sha256")
                 .update(pass + "/genshin").digest('hex');
 
@@ -41,7 +41,7 @@ function post(req, res) {
                 d: null,
                 m: "회원가입에 성공하였습니다."
             });
-        } catch(e) {
+        } catch (e) {
             throw e;
         }
     })();

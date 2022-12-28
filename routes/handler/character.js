@@ -10,6 +10,7 @@ const schema = yup.object({
 async function post(req, res) {
     /** @type {import("../controllers/redis")} */
     const redis = req.redis;
+
     /** @type {import("../controllers/enka")} */
     const enka = req.enka;
 
@@ -92,12 +93,13 @@ async function post(req, res) {
                     }
                 }
             });
+
             result[language === 'en' ? 'skills' : '스킬'] = skillList;
             oChar[name] = result;
         }
 
-        const hUID = crypto.createHash('sha256').update(`${req.route.path}/${uid}`).digest('hex');
-        redis.set(hUID, JSON.stringify(oChar));
+        // const hUID = crypto.createHash('sha256').update(`${req.route.path}/${uid}`).digest('hex');
+        // redis.set(hUID, JSON.stringify(oChar));
 
         return res.status(200).json({
             c: 200,

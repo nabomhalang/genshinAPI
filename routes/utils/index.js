@@ -1,5 +1,5 @@
-const {create,decode,encrypt,decrypt,verify} = require("./auth");
-const {filterTagFromUserData, getCharacters,makeObject} = require("./genshin");
+const { create, decode, encrypt, decrypt, verify, createRandom } = require("./auth");
+const { filterTagFromUserData, getCharacters, makeObject } = require("./genshin");
 
 module.exports = {
     create,
@@ -9,5 +9,6 @@ module.exports = {
     verify,
     filterTagFromUserData,
     getCharacters,
-    makeObject
+    makeObject,
+    createRandom
 }

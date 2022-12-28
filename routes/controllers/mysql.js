@@ -16,7 +16,7 @@ class MysqlConn {
      */
     init(user, pass, database, callback) {
         this.config = {
-            host: DB_HOST,
+            host: 'mariadb',
             user: user,
             password: pass,
             database: database,
@@ -25,7 +25,7 @@ class MysqlConn {
 
         this.sql = mysql.createPool(this.config);
 
-        if(callback) callback(this);
+        if (callback) callback(this);
     }
 
     /**

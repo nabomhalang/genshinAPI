@@ -25,7 +25,7 @@ function cache(req, res, next) {
             if (r) {
                 return res.status(200).json({
                     c: 200,
-                    d: JSON.parse(r)
+                    d: r
                 });
             } else next();
         })
